@@ -25,14 +25,14 @@ resource "aws_s3_bucket" "my_bucket" {
 }
 
 resource "aws_s3_bucket_website_configuration" "s3_website" {
-  bucket = "mybucketsafsdashish54"
+  bucket = "mybucketsafsdashish58567564"
   index_document {
     suffix = "index.html"
   }
 }
 
 resource "aws_s3_bucket_public_access_block" "s3_block_public_access" {
-  bucket                  = "mybucketsafsdashish54"
+  bucket                  = "mybucketsafsdashish58567564"
   block_public_acls       = false
   block_public_policy     = false
   ignore_public_acls      = false
@@ -54,7 +54,7 @@ data "aws_iam_policy_document" "bucket_policy" {
 }
 
 resource "aws_s3_bucket_policy" "bucket_policy" {
-  bucket = "mybucketsafsdashish54"
+  bucket = "mybucketsafsdashish58567564"
   policy = data.aws_iam_policy_document.bucket_policy.json
 }
 
