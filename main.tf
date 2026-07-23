@@ -75,6 +75,7 @@ resource "aws_s3_bucket_versioning" "enable_versioning" {
 
 }
 
+#this is the output block which will display the website address after the terraform apply command is executed successfully
 output "website_address" {
   description = "Static website is accessible on this address"
   value       = aws_s3_bucket_website_configuration.s3_website.website_endpoint
