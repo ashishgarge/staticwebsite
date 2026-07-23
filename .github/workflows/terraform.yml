@@ -1,0 +1,97 @@
+name: "Terraform CI/CD"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write # Required for writing plan outputs as comments on PRs
+
+env:
+  # Replace with your actual cloud credentials or OIDC configurations
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  TF_LOG: INFO
+
+jobs:
+  terraform:
+    name: "Terraform Process"
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clone your source code onto the GitHub runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Install the specified version of the Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.0 # Define your exact targeted version
+
+      # 3. Format validation check
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true # Prevents pipeline from stopping immediately so validate can run
+
+      # 4. Initialize working directory containing configuration files
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      # 5. Validate the infrastructure syntax configuration files
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      # 6. Generate speculative plan on PR creations or updates
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color -input=false
+        continue-on-error: true
+
+      # 7. Post the speculative plan to the PR comment thread for peer reviews
+      - name: Update Pull Request with Plan
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan Log Details</summary>
+
+            \`\`\`hcl
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action Run: [Link](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      # Fail the job if format or plan phases returned failures
+      - name: Check Status
+        if: steps.plan.outcome == 'failure' || steps.fmt.outcome == 'failure'
+        run: exit 1
+
+      # 8. Deploy your configurations permanently upon direct merges into main branch
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
