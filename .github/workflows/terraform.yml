@@ -1,6 +1,7 @@
 name: "Terraform CI/CD Pipeline Create Website"
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch
   push:
     branches:
       - master
