@@ -28,6 +28,9 @@ jobs:
         with:
           terraform_version: 1.10.0 # Define your exact targeted version
 
+      - name: Terraform init
+        run: terraform init
+
 # 8. Deploy your configurations permanently upon direct merges into main branch
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
