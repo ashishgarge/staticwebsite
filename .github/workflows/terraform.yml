@@ -1,6 +1,6 @@
 name: "Terraform CI/CD Pipeline Create Website"
 
-on: workflow_dispatch
+on: [push, pull_request, workflow_dispatch]
   
 permissions:
   contents: read
