@@ -1,4 +1,4 @@
-name: "Terraform CI/CD Pipeline Create Website"
+name: "Terraform CI/CD Pipeline to test and generate the plan for the website"
 
 on: [push, pull_request, workflow_dispatch]
   
